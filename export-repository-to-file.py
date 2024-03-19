@@ -4,6 +4,8 @@ import os
 import re
 import sys
 
+from tqdm import tqdm
+
 
 def retrieve_exclusion_patterns(exclusion_file_path):
     """
@@ -38,6 +40,9 @@ def process_project(project_path, exclusion_patterns, output_file):
     """
     Process the project files and write their contents to the output file.
     """
+    total_files = sum(len(files) for _, _, files in os.walk(project_path))
+    progress_bar = tqdm(total=total_files, unit='file', desc='Processing files')
+
     for root, _, files in os.walk(project_path):
         for file in files:
             file_path = os.path.join(root, file)
@@ -50,6 +55,9 @@ def process_project(project_path, exclusion_patterns, output_file):
                     output_file.write("-" * 4 + "\n")
                     output_file.write(f"{relative_file_path}\n")
                     output_file.write(f"{contents}\n")
+            progress_bar.update(1)
+
+    progress_bar.close()
 
 
 def main():
@@ -77,6 +85,11 @@ def main():
         exclusion_patterns = retrieve_exclusion_patterns(exclusion_file_path)
     else:
         exclusion_patterns = []
+
+    print(f"Processing project: {project_path}")
+    print(f"Using exclusion file: {exclusion_file_path}")
+    print(f"Output file: {output_file_path}")
+
     with open(output_file_path, 'w') as output_file:
         if preamble_file:
             with open(preamble_file, 'r') as pf:

@@ -6,23 +6,38 @@ import sys
 
 
 def retrieve_exclusion_patterns(exclusion_file_path):
+    """
+    Retrieve the exclusion patterns from the .gitignore file.
+    """
     exclusion_patterns = []
     with open(exclusion_file_path, 'r') as exclusion_file:
         for line in exclusion_file:
-            if sys.platform == "win32":
-                line = line.replace("/", "\\")
-            exclusion_patterns.append(line.strip())
+            line = line.strip()
+            if line and not line.startswith('#'):
+                if sys.platform == "win32":
+                    line = line.replace("/", "\\")
+                exclusion_patterns.append(line)
     return exclusion_patterns
 
 
 def is_excluded(file_path, exclusion_patterns):
+    """
+    Check if a file should be excluded based on the exclusion patterns.
+    """
     for pattern in exclusion_patterns:
-        if fnmatch.fnmatch(file_path, pattern):
+        if pattern.endswith('/') or pattern.endswith('\\'):
+            # Recursive pattern
+            if file_path.startswith(pattern):
+                return True
+        elif fnmatch.fnmatch(file_path, pattern):
             return True
     return False
 
 
 def process_project(project_path, exclusion_patterns, output_file):
+    """
+    Process the project files and write their contents to the output file.
+    """
     for root, _, files in os.walk(project_path):
         for file in files:
             file_path = os.path.join(root, file)
@@ -37,7 +52,10 @@ def process_project(project_path, exclusion_patterns, output_file):
                     output_file.write(f"{contents}\n")
 
 
-if __name__ == "__main__":
+def main():
+    """
+    Main function to handle command-line arguments and process the project.
+    """
     if len(sys.argv) < 2:
         print("Usage: python project_to_text.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]")
         sys.exit(1)
@@ -71,3 +89,7 @@ if __name__ == "__main__":
     with open(output_file_path, 'a') as output_file:
         output_file.write("--END--")
     print(f"Project contents written to {output_file_path}.")
+
+
+if __name__ == "__main__":
+    main()

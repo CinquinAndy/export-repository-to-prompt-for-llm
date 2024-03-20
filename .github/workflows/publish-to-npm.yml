@@ -1,4 +1,4 @@
-name: Publish to npm
+name: Publish to npm when a new tag is pushed
 
 on:
   push:

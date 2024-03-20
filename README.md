@@ -3,6 +3,20 @@
 This script converts a project's code files into a single text file, excluding specified files and lines between `<svg>` and `</svg>` tags. The resulting text file can be used as
 input for language models or other text processing tasks.
 
+## Table of Contents
+
+- [Features](#features)
+- [Usage](#usage)
+- [How It Works](#how-it-works)
+- [Example](#example)
+- [Requirements](#requirements)
+- [Setting Up a Virtual Environment and Installing Dependencies](#setting-up-a-virtual-environment-and-installing-dependencies)
+- [License](#license)
+- [Contributing](#contributing)
+- [Acknowledgements](#acknowledgements)
+- [Contact](#contact)
+
+
 ## Features
 
 - Recursively processes all code files in a project directory
@@ -67,6 +81,84 @@ The `node_modules` directory and its contents will be excluded from the output.
 - Python 3.x
 - No external dependencies
 
+## Setting Up a Virtual Environment and Installing Dependencies
+
+### Setting Up a Virtual Environment
+
+A virtual environment is recommended for running this script to manage dependencies cleanly. To set up a virtual environment, follow these steps:
+
+1. **Create the Virtual Environment**: Navigate to your project directory in the terminal and run the following command:
+
+- On Windows:
+
+```
+python -m venv venv
+```
+
+- On macOS and Linux:
+
+```
+python3 -m venv venv
+```
+
+This command creates a venv directory in your project folder, containing the virtual environment.
+
+2. **Activate the Virtual Environment**: Run the following command in the terminal:
+
+- On Windows:
+
+```
+.\venv\Scripts\activate
+```
+
+- On macOS and Linux:
+
+```
+source venv/bin/activate
+```
+
+Your terminal prompt will change to indicate that the virtual environment is activated.
+
+### Installing Dependencies
+
+This script uses `tqdm` for displaying progress. To install this and any other required dependencies, run:
+
+```
+pip install -r requirements.txt
+```
+
+Ensure you have the virtual environment activated when running this command to install dependencies in an isolated environment.
+
+### Running the Script
+
+With the virtual environment activated and dependencies installed, you can now run the script as described in the Usage section. For example:
+
+```
+python project_to_text.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]
+```
+
+### Deactivating the Virtual Environment
+
+When you're done working with the script, you can deactivate the virtual environment by running:
+
+```
+deactivate
+```
+
+This will return your terminal to its original state.
+
 ## License
 
 This project is open-source and available under the [MIT License](https://opensource.org/licenses/MIT).
+
+## Contributing
+
+Contributions are welcome! Feel free to open an issue or submit a pull request if you find a bug or want to suggest an improvement.
+
+## Acknowledgements
+
+This script was inspired by the need to preprocess code files for input into language models.
+
+## Contact
+
+If you want to contact me you can reach me on [andy-cinquin.com](https://andy-cinquin.com/).

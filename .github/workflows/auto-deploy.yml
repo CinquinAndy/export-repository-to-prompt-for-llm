@@ -17,8 +17,8 @@ jobs:
 
       - name: Configure Git
         run: |
-          git config --local user.email "your-email@example.com"
-          git config --local user.name "Your Name"
+          git config --local user.email "cinquin.andy@gmail.com"
+          git config --local user.name "Cinquin Andy"
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -33,19 +33,19 @@ jobs:
         id: version-bump
         run: |
           npm version patch -m "Upgrade to %s due to dependency updates"
-          version=$(npm version | sed -n 's/\s*@\s*\([0-9]*\.[0-9]*\.[0-9]*\).*/\1/p')
+          version=$(npm pkg get version | sed 's/"//g')
           echo "version=$version" >> $GITHUB_OUTPUT
-          echo "::notice::Current version: $version"
+          echo "Current version: $version"
 
       - name: Create Version Bump Branch
         run: |
           git checkout -b auto-deploy-${{ github.sha }}
           git push origin auto-deploy-${{ github.sha }}
-          echo "::notice::Created branch auto-deploy-${{ github.sha }}"
+          echo "Created branch auto-deploy-${{ github.sha }}"
 
       - name: Create Pull Request
         id: create-pr
-        uses: peter-evans/create-pull-request@v4
+        uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GIT_TOKEN }}
           commit-message: Bump version to ${{ steps.version-bump.outputs.version }}
@@ -57,11 +57,12 @@ jobs:
           branch: auto-deploy-${{ github.sha }}
 
       - name: Log Pull Request URL
+        if: steps.create-pr.outputs.pull-request-url != ''
         run: |
-          echo "::notice::Pull Request URL: ${{ steps.create-pr.outputs.pull-request-url }}"
+          echo "Pull Request URL: ${{ steps.create-pr.outputs.pull-request-url }}"
 
       - name: Merge Pull Request
-        if: success() && github.event_name == 'push'
+        if: success() && github.event_name == 'push' && steps.create-pr.outputs.pull-request-number != ''
         uses: juliangruber/merge-pull-request-action@v1
         with:
           github-token: ${{ secrets.GIT_TOKEN }}
@@ -72,6 +73,6 @@ jobs:
         if: success() && github.event_name == 'push'
         run: |
           npm publish
-          echo "::notice::Package published to NPM"
+          echo "Package published to NPM"
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

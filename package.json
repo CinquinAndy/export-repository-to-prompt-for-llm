@@ -1,0 +1,17 @@
+{
+  "name": "export-repository-to-file",
+  "version": "1.0.0",
+  "description": "A script to export a project repository to a structured text file, or prompt, for LLMs, like ChatGPT, Mistral or GPT-3",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "bin": {
+    "export-repository-to-file": "index.js"
+  },
+  "dependencies": {
+    "python-shell": "^3.0.1"
+  },
+  "author": "Cinquin Andy",
+  "license": "MIT"
+}

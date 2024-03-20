@@ -9,6 +9,8 @@ as input for Large Language Models (LLMs) like ChatGPT, Mistral, and others, ena
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
+    - [Python Script](#python-script)
+    - [NPM Package](#npm-package)
 - [Configuration](#configuration)
 - [How It Works](#how-it-works)
 - [Example](#example)
@@ -24,28 +26,54 @@ as input for Large Language Models (LLMs) like ChatGPT, Mistral, and others, ena
 - Supports an optional preamble file to include at the beginning of the output
 - Generates a structured text file suitable for input to LLMs
 - Provides a progress bar to track the processing of files
+- Available as both a Python script and an NPM package
 
 ## Installation
 
-1. Clone the repository or download the `export_repository_to_file.py` script.
+### Python Script
+
+1. Clone the repository or download the `export-repository-to-file.py` script.
 2. Install the required dependencies by running:
    ```
    pip install -r requirements.txt
    ```
 
+### NPM Package
+
+1. Install the NPM package globally by running:
+   ```
+   npm install -g export-repository-to-file
+   ```
+
 ## Usage
+
+### Python Script
 
 To use the Export Repository to File script, follow these steps:
 
 1. Open a terminal or command prompt and navigate to the directory containing the script.
 2. Run the script with the following command:
    ```
-   python export_repository_to_file.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]
+   python export-repository-to-file.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]
    ```
     - `/path/to/project`: The path to the project directory you want to export.
     - `-p /path/to/preamble.txt` (optional): The path to a preamble file to include at the beginning of the output file.
     - `-o /path/to/output_file.txt` (optional): The path to the output file. If not specified, the output will be written to `output.txt` in the current directory.
 3. The script will process the project files and generate the output file.
+
+### NPM Package
+
+To use the Export Repository to File NPM package, follow these steps:
+
+1. Open a terminal or command prompt.
+2. Run the package with the following command:
+   ```
+   export-repository-to-file /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]
+   ```
+    - `/path/to/project`: The path to the project directory you want to export.
+    - `-p /path/to/preamble.txt` (optional): The path to a preamble file to include at the beginning of the output file.
+    - `-o /path/to/output_file.txt` (optional): The path to the output file. If not specified, the output will be written to `output.txt` in the current directory.
+3. The package will process the project files and generate the output file.
 
 ## Configuration
 
@@ -95,7 +123,13 @@ node_modules/
 Running the script with the following command:
 
 ```
-python export_repository_to_file.py /path/to/project -p /path/to/project/preamble.txt -o output.txt
+python export-repository-to-file.py /path/to/project -p /path/to/project/preamble.txt -o output.txt
+```
+
+Or, if using the NPM package:
+
+```
+npm start /path/to/project -p /path/to/project/preamble.txt -o output.txt
 ```
 
 Will generate an `output.txt` file with the following content:
@@ -123,4 +157,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 ## Contact
 
-For any questions or inquiries, please contact [Your Name] at [your-email@example.com].
+For any questions or inquiries, please contact Andy Cinquin at [contact@andy-cinquin.fr](mailto:contact@andy-cinquin.fr).
+
+You can also visit my portfolio at [andy-cinquin.com](https://andy-cinquin.com/).

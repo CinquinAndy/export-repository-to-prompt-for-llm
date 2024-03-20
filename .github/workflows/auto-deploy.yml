@@ -39,5 +39,9 @@ jobs:
 
       - name: Create Git Tag
         run: |
-          git tag v${{ steps.version-bump.outputs.version }}
-          git push origin v${{ steps.version-bump.outputs.version }}
+          if git rev-parse v${{ steps.version-bump.outputs.version }} >/dev/null 2>&1; then
+              echo "Tag v${{ steps.version-bump.outputs.version }} already exists. Skipping tag creation."
+          else
+              git tag v${{ steps.version-bump.outputs.version }}
+              git push origin v${{ steps.version-bump.outputs.version }}
+          fi

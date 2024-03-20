@@ -1,4 +1,4 @@
-name: Auto Deploy, install dependancies, increment version and push tag
+name: Auto Deploy, install dependencies, increment version and push tag
 
 on:
   pull_request:
@@ -14,7 +14,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GIT_TOKEN }}
+          token: ${{ secrets.PAT }} # Assurez-vous que ce soit votre PAT si nécessaire.
+          ref: 'main'
 
       - name: Configure Git
         run: |
@@ -31,39 +32,27 @@ jobs:
         run: npm ci
 
       - name: Increment Package Version and Update Tag
-        id: version-bump
         run: |
-          # Fetch all tags to ensure we have the latest picture
           git fetch --tags
-          
-          # Initial version from package.json
           current_version=$(npm pkg get version | sed 's/"//g')
-          echo "Current version: $current_version"
-          
           new_version=$current_version
           tag_exists=true
           
-          # Loop until we find a non-existing tag
           while $tag_exists; do
             new_version=$(npx semver -i patch $new_version)
             if git rev-parse v$new_version >/dev/null 2>&1; then
               echo "Tag v$new_version already exists. Trying next version..."
             else
-              echo "New version: $new_version"
               tag_exists=false
             fi
           done
           
-          # Update the package.json version without creating a git tag
           npm version $new_version --no-git-tag-version
-          echo "version=$new_version" >> $GITHUB_OUTPUT
-          
-          # Commit the changes made by npm version to package.json
+          echo "::set-output name=VERSION::$new_version"
+
+      - name: Commit and Push Version Update
+        run: |
           git add package.json
-          git commit -m "chore(release): $new_version"
-          
-          # Now create and push the new tag since we have a unique version
-          git tag v$new_version
-          
-          # Push the changes and the new tag back to the repository
-          git push origin main --follow-tags
+          git commit -m "chore(release): ${{ steps.version-bump.outputs.VERSION }}"
+          git tag v${{ steps.version-bump.outputs.VERSION }}
+          git push origin refs/tags/v${{ steps.version-bump.outputs.VERSION }}

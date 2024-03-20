@@ -24,15 +24,16 @@ def retrieve_exclusion_patterns(exclusion_file_path):
 
 def is_excluded(file_path, exclusion_patterns):
     """
-    Check if a file should be excluded based on the exclusion patterns.
+    Check if a file or folder should be excluded based on the exclusion patterns.
     """
     for pattern in exclusion_patterns:
-        if pattern.endswith('/') or pattern.endswith('\\'):
-            # Recursive pattern
-            if file_path.startswith(pattern):
-                return True
-        elif fnmatch.fnmatch(file_path, pattern):
+        if fnmatch.fnmatch(file_path, pattern):
             return True
+        # Check if the file is inside an excluded folder
+        for root, dirs, _ in os.walk(os.path.dirname(file_path)):
+            for dir in dirs:
+                if fnmatch.fnmatch(os.path.join(root, dir), pattern):
+                    return True
     return False
 
 
@@ -40,23 +41,28 @@ def process_project(project_path, exclusion_patterns, output_file):
     """
     Process the project files and write their contents to the output file.
     """
-    total_files = sum(len(files) for _, _, files in os.walk(project_path))
-    progress_bar = tqdm(total=total_files, unit='file', desc='Processing files')
-
+    # Get all files in the project directory
+    all_files = []
     for root, _, files in os.walk(project_path):
         for file in files:
             file_path = os.path.join(root, file)
-            relative_file_path = os.path.relpath(file_path, project_path)
-            if not is_excluded(relative_file_path, exclusion_patterns):
-                with open(file_path, 'r', errors='ignore') as file:
-                    contents = file.read()
-                    # Ignore lines between <svg> and </svg> tags
-                    contents = re.sub(r'<svg>.*?</svg>', '', contents, flags=re.DOTALL)
-                    output_file.write("-" * 4 + "\n")
-                    output_file.write(f"{relative_file_path}\n")
-                    output_file.write(f"{contents}\n")
-            progress_bar.update(1)
+            all_files.append(file_path)
 
+    # Remove excluded files and folders from the list
+    filtered_files = [file for file in all_files if not is_excluded(file, exclusion_patterns)]
+
+    # Process the filtered files
+    progress_bar = tqdm(total=len(filtered_files), unit='file', desc='Processing files')
+    for file_path in filtered_files:
+        relative_file_path = os.path.relpath(file_path, project_path)
+        with open(file_path, 'r', errors='ignore') as file:
+            contents = file.read()
+            # Ignore lines between <svg> and </svg> tags
+            contents = re.sub(r'<svg>.*?</svg>', '', contents, flags=re.DOTALL)
+            output_file.write("-" * 4 + "\n")
+            output_file.write(f"{relative_file_path}\n")
+            output_file.write(f"{contents}\n")
+        progress_bar.update(1)
     progress_bar.close()
 
 

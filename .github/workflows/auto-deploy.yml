@@ -1,4 +1,4 @@
-name: Publish to npm
+name: Auto Deploy, install dependancies, increment version and push tag
 
 on:
   push:

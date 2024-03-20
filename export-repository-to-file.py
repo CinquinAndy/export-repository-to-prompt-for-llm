@@ -16,8 +16,6 @@ def retrieve_exclusion_patterns(exclusion_file_path):
         for line in exclusion_file:
             line = line.strip()
             if line and not line.startswith('#'):
-                if sys.platform == "win32":
-                    line = line.replace("/", "\\")
                 exclusion_patterns.append(line)
     return exclusion_patterns
 
@@ -27,7 +25,7 @@ def is_excluded(path, exclusion_patterns):
     Check if a file or folder should be excluded based on the exclusion patterns.
     """
     for pattern in exclusion_patterns:
-        if fnmatch.fnmatch(path, pattern):
+        if fnmatch.fnmatch(path, pattern) or path.startswith(tuple(exclusion_patterns)):
             return True
     return False
 
@@ -36,7 +34,7 @@ def is_special_file(file_path):
     """
     Check if a file is a special file based on its extension.
     """
-    special_extensions = ['.pdf', '.img', '.svg', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.webp'
+    special_extensions = ['.pdf', '.img', '.svg', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.webp',
                           '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus', '.mp4', '.mkv', '.webm',
                           '.avi', '.mov', '.wmv', '.flv', '.3gp', '.mpg', '.mpeg', '.m4v', '.m2v', '.m2ts']
     _, extension = os.path.splitext(file_path)
@@ -52,11 +50,9 @@ def process_project(project_path, exclusion_patterns, output_file):
 
     # Traverse the project folders and files
     for root, dirs, files in os.walk(project_path):
-        # Exclude the .git folder && .idea folder
+        # Exclude the .git folder
         if '.git' in dirs:
             dirs.remove('.git')
-        if '.idea' in dirs:
-            dirs.remove('.idea')
 
         # Filter out excluded folders
         dirs[:] = [d for d in dirs if not is_excluded(os.path.join(root, d), exclusion_patterns)]
@@ -83,12 +79,10 @@ def main():
     Main function to handle command-line arguments and process the project.
     """
     if len(sys.argv) < 2:
-        print("Usage: python project_to_text.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]")
+        print("Usage: python export-repository-to-file.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]")
         sys.exit(1)
     project_path = sys.argv[1]
     exclusion_file_path = os.path.join(project_path, ".gitignore")
-    if sys.platform == "win32":
-        exclusion_file_path = exclusion_file_path.replace("/", "\\")
     if not os.path.exists(exclusion_file_path):
         # Try to use the .gitignore file in the current directory as a fallback
         HERE = os.path.dirname(os.path.abspath(__file__))

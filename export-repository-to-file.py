@@ -41,9 +41,10 @@ def is_special_file(file_path):
     return extension.lower() in special_extensions
 
 
-def process_project(project_path, exclusion_patterns, output_file):
+def process_project(project_path, exclusion_patterns, output_file, large_files_output):
     """
     Process the project files and write their contents to the output file.
+    Also, generate a list of files with more than 250 lines of code or 2500 characters.
     """
     total_files = sum(len(files) for _, _, files in os.walk(project_path))
     progress_bar = tqdm(total=total_files, unit='file', desc='Processing files')
@@ -69,6 +70,11 @@ def process_project(project_path, exclusion_patterns, output_file):
                     output_file.write("-" * 4 + "\n")
                     output_file.write(f"{relative_file_path}\n")
                     output_file.write(f"{contents}\n")
+
+                    # Check if the file has more than 250 lines of code or 2500 characters
+                    if contents.count('\n') > 250 or len(contents) > 2500:
+                        large_files_output.write(f"{relative_file_path}\n")
+
             progress_bar.update(1)
 
     progress_bar.close()
@@ -79,7 +85,7 @@ def main():
     Main function to handle command-line arguments and process the project.
     """
     if len(sys.argv) < 2:
-        print("Usage: python export-repository-to-file.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]")
+        print("Usage: python export-repository-to-file.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt] [-l /path/to/large_files_output.txt]")
         sys.exit(1)
     project_path = sys.argv[1]
     exclusion_file_path = os.path.join(project_path, ".gitignore")
@@ -93,6 +99,9 @@ def main():
     output_file_path = 'output.txt'
     if "-o" in sys.argv:
         output_file_path = sys.argv[sys.argv.index("-o") + 1]
+    large_files_output_path = 'large_files_output.txt'
+    if "-l" in sys.argv:
+        large_files_output_path = sys.argv[sys.argv.index("-l") + 1]
     if os.path.exists(exclusion_file_path):
         exclusion_patterns = retrieve_exclusion_patterns(exclusion_file_path)
     else:
@@ -101,8 +110,9 @@ def main():
     print(f"Processing project: {project_path}")
     print(f"Using exclusion file: {exclusion_file_path}")
     print(f"Output file: {output_file_path}")
+    print(f"Large files output: {large_files_output_path}")
 
-    with open(output_file_path, 'w') as output_file:
+    with open(output_file_path, 'w') as output_file, open(large_files_output_path, 'w') as large_files_output:
         if preamble_file:
             with open(preamble_file, 'r') as pf:
                 preamble_text = pf.read()
@@ -110,10 +120,11 @@ def main():
         else:
             output_file.write(
                 "The following text represents a project with code. The structure of the text consists of sections beginning with ----, followed by a single line containing the file path and file name, and then a variable number of lines containing the file contents. The text representing the project ends when the symbols --END-- are encountered. Any further text beyond --END-- is meant to be interpreted as instructions using the aforementioned project as context.\n")
-        process_project(project_path, exclusion_patterns, output_file)
+        process_project(project_path, exclusion_patterns, output_file, large_files_output)
     with open(output_file_path, 'a') as output_file:
         output_file.write("--END--")
     print(f"Project contents written to {output_file_path}.")
+    print(f"Files with more than 250 lines of code or 2500 characters listed in {large_files_output_path}.")
 
 
 if __name__ == "__main__":

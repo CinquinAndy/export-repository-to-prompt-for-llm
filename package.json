@@ -10,6 +10,7 @@
     "export-repository-to-file": "index.js"
   },
   "dependencies": {
+    "semver": "7.6.0",
     "python-shell": "1.0.8"
   },
   "author": "Cinquin Andy",

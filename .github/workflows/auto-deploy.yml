@@ -1,23 +1,25 @@
 name: Auto deploy - upgrade dependencies and publish
 
 on:
-  push:
+  pull_request:
+    types: [ closed ]
     branches:
       - main
 
 jobs:
   publish:
+    if: github.event.pull_request.merged == true && startsWith(github.head_ref, 'renovate/')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: main # Ensure working on the main branch
 
       - name: Configure Git
         run: |
           git config --local user.email "cinquin.andy@gmail.com"
-          git config --local user.name "Cinquin Andy"
+          git config --local user.name "Andy Cinquin"
 
       - name: Use Node.js
         uses: actions/setup-node@v4
@@ -30,10 +32,8 @@ jobs:
 
       - name: Increment Package Version
         run: |
-          npm version patch -m "Upgrade to %s"
+          npm version patch -m "Upgrade to %s due to dependency updates"
           git push origin main
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
 
       - name: Publish to NPM
         run: npm publish

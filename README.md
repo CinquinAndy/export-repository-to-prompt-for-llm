@@ -44,6 +44,7 @@ as input for Large Language Models (LLMs) like ChatGPT, Mistral, and others, ena
    ```
    npm install -g export-repository-to-file
    ```
+   then you can use the package with the `export-repository-to-file` command. From everywhere in your terminal.
 
 ## Usage
 

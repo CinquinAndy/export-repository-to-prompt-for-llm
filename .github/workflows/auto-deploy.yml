@@ -32,19 +32,18 @@ jobs:
         run: npm ci
 
       - name: Increment Package Version and Update Tag
+        id: version-bump
         run: |
           git fetch --tags
           current_version=$(npm pkg get version | sed 's/"//g')
-          new_version=$current_version
-          tag_exists=true
+          echo "Current version: $current_version"
           
-          while $tag_exists; do
+          new_version=$(npx semver -i patch $current_version)
+          echo "New version: $new_version"
+          
+          while git rev-parse v$new_version >/dev/null 2>&1; do
             new_version=$(npx semver -i patch $new_version)
-            if git rev-parse v$new_version >/dev/null 2>&1; then
-              echo "Tag v$new_version already exists. Trying next version..."
-            else
-              tag_exists=false
-            fi
+            echo "Tag v$new_version already exists. Trying next version..."
           done
           
           npm version $new_version --no-git-tag-version
@@ -55,4 +54,5 @@ jobs:
           git add package.json
           git commit -m "chore(release): ${{ steps.version-bump.outputs.VERSION }}"
           git tag v${{ steps.version-bump.outputs.VERSION }}
+          git push origin main --follow-tags
           git push origin refs/tags/v${{ steps.version-bump.outputs.VERSION }}

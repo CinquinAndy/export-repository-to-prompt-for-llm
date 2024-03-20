@@ -29,19 +29,34 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Increment Package Version
+      - name: Increment Package Version and Update Tag
         id: version-bump
         run: |
+          # Fetch all tags to ensure we have the latest picture
+          git fetch --tags
+          
+          # Initial version from package.json
           current_version=$(npm pkg get version | sed 's/"//g')
-          new_version=$(npx semver -i patch $current_version)
+          echo "Current version: $current_version"
+          
+          new_version=$current_version
+          tag_exists=true
+          
+          # Loop until we find a non-existing tag
+          while $tag_exists; do
+            new_version=$(npx semver -i patch $new_version)
+            if git rev-parse v$new_version >/dev/null 2>&1; then
+              echo "Tag v$new_version already exists. Trying next version..."
+            else
+              echo "New version: $new_version"
+              tag_exists=false
+            fi
+          done
+          
+          # Update the package.json version without creating a git tag
           npm version $new_version --no-git-tag-version
           echo "version=$new_version" >> $GITHUB_OUTPUT
-
-      - name: Create Git Tag
-        run: |
-          if git rev-parse v${{ steps.version-bump.outputs.version }} >/dev/null 2>&1; then
-              echo "Tag v${{ steps.version-bump.outputs.version }} already exists. Skipping tag creation."
-          else
-              git tag v${{ steps.version-bump.outputs.version }}
-              git push origin v${{ steps.version-bump.outputs.version }}
-          fi
+          
+          # Now create and push the new tag since we have a unique version
+          git tag v$new_version
+          git push origin v$new_version

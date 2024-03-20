@@ -1,12 +1,13 @@
 name: Auto Deploy, install dependancies, increment version and push tag
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    branches: [ main ]
+    types: [ closed ]
 
 jobs:
   publish:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -57,6 +58,12 @@ jobs:
           npm version $new_version --no-git-tag-version
           echo "version=$new_version" >> $GITHUB_OUTPUT
           
+          # Commit the changes made by npm version to package.json
+          git add package.json
+          git commit -m "chore(release): $new_version"
+          
           # Now create and push the new tag since we have a unique version
           git tag v$new_version
-          git push origin v$new_version
+          
+          # Push the changes and the new tag back to the repository
+          git push origin main --follow-tags

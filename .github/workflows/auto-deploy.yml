@@ -41,9 +41,3 @@ jobs:
         run: |
           git tag v${{ steps.version-bump.outputs.version }}
           git push origin v${{ steps.version-bump.outputs.version }}
-
-      - name: Publish to npm
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

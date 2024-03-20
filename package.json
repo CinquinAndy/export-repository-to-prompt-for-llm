@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "semver": "7.6.0",
-    "python-shell": "1.0.8"
+    "python-shell": "5.0.0"
   },
   "author": "Cinquin Andy",
   "license": "MIT"

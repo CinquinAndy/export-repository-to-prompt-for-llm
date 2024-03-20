@@ -1,6 +1,6 @@
 {
   "name": "export-repository-to-file",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "A script to export a project repository to a structured text file, or prompt, for LLMs, like ChatGPT, Mistral or GPT-3",
   "main": "index.js",
   "scripts": {

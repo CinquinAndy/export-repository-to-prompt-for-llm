@@ -22,47 +22,59 @@ def retrieve_exclusion_patterns(exclusion_file_path):
     return exclusion_patterns
 
 
-def is_excluded(file_path, exclusion_patterns):
+def is_excluded(path, exclusion_patterns):
     """
     Check if a file or folder should be excluded based on the exclusion patterns.
     """
     for pattern in exclusion_patterns:
-        if fnmatch.fnmatch(file_path, pattern):
+        if fnmatch.fnmatch(path, pattern):
             return True
-        # Check if the file is inside an excluded folder
-        for root, dirs, _ in os.walk(os.path.dirname(file_path)):
-            for dir in dirs:
-                if fnmatch.fnmatch(os.path.join(root, dir), pattern):
-                    return True
     return False
+
+
+def is_special_file(file_path):
+    """
+    Check if a file is a special file based on its extension.
+    """
+    special_extensions = ['.pdf', '.img', '.svg', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.webp'
+                          '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus', '.mp4', '.mkv', '.webm',
+                          '.avi', '.mov', '.wmv', '.flv', '.3gp', '.mpg', '.mpeg', '.m4v', '.m2v', '.m2ts']
+    _, extension = os.path.splitext(file_path)
+    return extension.lower() in special_extensions
 
 
 def process_project(project_path, exclusion_patterns, output_file):
     """
     Process the project files and write their contents to the output file.
     """
-    # Get all files in the project directory
-    all_files = []
-    for root, _, files in os.walk(project_path):
+    total_files = sum(len(files) for _, _, files in os.walk(project_path))
+    progress_bar = tqdm(total=total_files, unit='file', desc='Processing files')
+
+    # Traverse the project folders and files
+    for root, dirs, files in os.walk(project_path):
+        # Exclude the .git folder && .idea folder
+        if '.git' in dirs:
+            dirs.remove('.git')
+        if '.idea' in dirs:
+            dirs.remove('.idea')
+
+        # Filter out excluded folders
+        dirs[:] = [d for d in dirs if not is_excluded(os.path.join(root, d), exclusion_patterns)]
+
+        # Process files in non-excluded folders
         for file in files:
             file_path = os.path.join(root, file)
-            all_files.append(file_path)
+            relative_file_path = os.path.relpath(file_path, project_path)
+            if not is_excluded(relative_file_path, exclusion_patterns) and not is_special_file(file_path):
+                with open(file_path, 'r', errors='ignore') as file:
+                    contents = file.read()
+                    # Ignore lines between <svg> and </svg> tags
+                    contents = re.sub(r'<svg>.*?</svg>', '', contents, flags=re.DOTALL)
+                    output_file.write("-" * 4 + "\n")
+                    output_file.write(f"{relative_file_path}\n")
+                    output_file.write(f"{contents}\n")
+            progress_bar.update(1)
 
-    # Remove excluded files and folders from the list
-    filtered_files = [file for file in all_files if not is_excluded(file, exclusion_patterns)]
-
-    # Process the filtered files
-    progress_bar = tqdm(total=len(filtered_files), unit='file', desc='Processing files')
-    for file_path in filtered_files:
-        relative_file_path = os.path.relpath(file_path, project_path)
-        with open(file_path, 'r', errors='ignore') as file:
-            contents = file.read()
-            # Ignore lines between <svg> and </svg> tags
-            contents = re.sub(r'<svg>.*?</svg>', '', contents, flags=re.DOTALL)
-            output_file.write("-" * 4 + "\n")
-            output_file.write(f"{relative_file_path}\n")
-            output_file.write(f"{contents}\n")
-        progress_bar.update(1)
     progress_bar.close()
 
 
@@ -103,7 +115,7 @@ def main():
                 output_file.write(f"{preamble_text}\n")
         else:
             output_file.write(
-                "The following text represents a project with code. The structure of the text consists of sections that begin with ----, followed by a single line containing the file path and file name, and then a variable number of lines containing the file contents. The text representing the project ends when the symbols --END-- are encountered. Any further text beyond --END-- is meant to be interpreted as instructions using the aforementioned project as context.\n")
+                "The following text represents a project with code. The structure of the text consists of sections beginning with ----, followed by a single line containing the file path and file name, and then a variable number of lines containing the file contents. The text representing the project ends when the symbols --END-- are encountered. Any further text beyond --END-- is meant to be interpreted as instructions using the aforementioned project as context.\n")
         process_project(project_path, exclusion_patterns, output_file)
     with open(output_file_path, 'a') as output_file:
         output_file.write("--END--")

@@ -4,13 +4,17 @@ const {spawn} = require('child_process');
 const path = require('path');
 
 // Install Python dependencies
-const installDeps = spawn('pip', ['install', '-r', path.join(__dirname, 'requirements.txt')]);
+const requirementsPath = path.join(__dirname, 'requirements.txt');
+const installDeps = spawn('pip', ['install', '-r', requirementsPath]);
+
 installDeps.stdout.on('data', (data) => {
     console.log(data.toString());
 });
+
 installDeps.stderr.on('data', (data) => {
     console.error(data.toString());
 });
+
 installDeps.on('close', (code) => {
     if (code !== 0) {
         console.error(`Failed to install Python dependencies. Exited with code ${code}`);

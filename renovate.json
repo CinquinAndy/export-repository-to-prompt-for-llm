@@ -1,6 +1,7 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": [
+    "config:base"
+  ],
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
@@ -8,6 +9,17 @@
       "automerge": true,
       "automergeType": "pr",
       "automergeStrategy": "squash"
+    },
+    {
+      "matchFiles": ["package.json"],
+      "matchDepTypes": ["dependencies", "devDependencies"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "JS dependencies"
+    },
+    {
+      "matchFiles": ["requirements.txt"],
+      "matchUpdateTypes": ["minor", "patch"],
+      "groupName": "Python dependencies"
     }
   ]
 }

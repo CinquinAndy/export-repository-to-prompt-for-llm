@@ -41,7 +41,7 @@ def is_special_file(file_path):
     return extension.lower() in special_extensions
 
 
-def process_project(project_path, exclusion_patterns, additional_exclusion_patterns, output_file, large_files_output):
+def process_project(project_path, exclusion_patterns, additional_exclusion_patterns, exclusion_list_config, output_file, large_files_output):
     """
     Process the project files and write their contents to the output file.
     Also, generate a list of files with more than 250 lines of code or 2500 characters.
@@ -56,13 +56,13 @@ def process_project(project_path, exclusion_patterns, additional_exclusion_patte
             dirs.remove('.git')
 
         # Filter out excluded folders
-        dirs[:] = [d for d in dirs if not is_excluded(os.path.join(root, d), exclusion_patterns + additional_exclusion_patterns)]
+        dirs[:] = [d for d in dirs if not is_excluded(os.path.join(root, d), exclusion_patterns + additional_exclusion_patterns + exclusion_list_config)]
 
         # Process files in non-excluded folders
         for file in files:
             file_path = os.path.join(root, file)
             relative_file_path = os.path.relpath(file_path, project_path)
-            if not is_excluded(relative_file_path, exclusion_patterns + additional_exclusion_patterns) and not is_special_file(file_path):
+            if not is_excluded(relative_file_path, exclusion_patterns + additional_exclusion_patterns + exclusion_list_config) and not is_special_file(file_path):
                 with open(file_path, 'r', errors='ignore') as file:
                     contents = file.read()
                     # Ignore lines between <svg> and </svg> tags
@@ -114,10 +114,16 @@ def main():
         additional_exclusion_patterns = retrieve_exclusion_patterns(additional_exclusion_patterns_file_path)
     else:
         additional_exclusion_patterns = []
+    exclusion_list_config_file_path = os.path.join(project_path, ".exclusionListConfig")
+    if os.path.exists(exclusion_list_config_file_path):
+        exclusion_list_config = retrieve_exclusion_patterns(exclusion_list_config_file_path)
+    else:
+        exclusion_list_config = []
 
     print(f"Processing project: {project_path}")
     print(f"Using exclusion file: {exclusion_file_path}")
     print(f"Using additional exclusion patterns file: {additional_exclusion_patterns_file_path}")
+    print(f"Using exclusion list config file: {exclusion_list_config_file_path}")
     print(f"Output file: {output_file_path}")
     print(f"Large files output: {large_files_output_path}")
 
@@ -129,7 +135,7 @@ def main():
         else:
             output_file.write(
                 "The following text represents a project with code. The structure of the text consists of sections beginning with ----, followed by a single line containing the file path and file name, and then a variable number of lines containing the file contents. The text representing the project ends when the symbols --END-- are encountered. Any further text beyond --END-- is meant to be interpreted as instructions using the aforementioned project as context.\n")
-        process_project(project_path, exclusion_patterns, additional_exclusion_patterns, output_file, large_files_output)
+        process_project(project_path, exclusion_patterns, additional_exclusion_patterns, exclusion_list_config, output_file, large_files_output)
     with open(output_file_path, 'a') as output_file:
         output_file.write("--END--")
     print(f"Project contents written to {output_file_path}.")

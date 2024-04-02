@@ -5,6 +5,7 @@ const path = require('path');
 const {program} = require('commander');
 const glob = require('glob');
 const cliProgress = require('cli-progress');
+const {minimatch} = require('minimatch');
 
 function retrieveExclusionPatterns(exclusionFilePath) {
     if (fs.existsSync(exclusionFilePath)) {
@@ -15,9 +16,10 @@ function retrieveExclusionPatterns(exclusionFilePath) {
 }
 
 function isExcluded(filePath, exclusionPatterns) {
-    return exclusionPatterns.some(pattern => {
-        return filePath.startsWith(pattern) || glob.sync(pattern, {matchBase: true, dot: true}).includes(filePath);
-    });
+    if (exclusionPatterns.some(pattern => minimatch(filePath, pattern)) !== true){
+        console.log("not excluded")
+    }
+    return exclusionPatterns.some(pattern => minimatch(filePath, pattern));
 }
 
 function isSpecialFile(filePath) {
@@ -30,7 +32,6 @@ function isSpecialFile(filePath) {
 
 function processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput) {
     const allFiles = glob.sync('**/*', { cwd: projectPath, nodir: true, dot: true });
-    console.log(`Processing ${allFiles.length} files...`)
     const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
     progressBar.start(allFiles.length, 0);
@@ -38,7 +39,6 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
     allFiles.forEach((file, index) => {
         const filePath = path.join(projectPath, file);
         const relativeFilePath = path.relative(projectPath, filePath);
-        console.log(`Processing ${relativeFilePath}...`)
 
         if (
             !isExcluded(relativeFilePath, exclusionPatterns) &&

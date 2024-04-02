@@ -5,7 +5,6 @@ const path = require('path');
 const {program} = require('commander');
 const glob = require('glob');
 const cliProgress = require('cli-progress');
-const minimatch = require('minimatch');
 
 function retrieveExclusionPatterns(exclusionFilePath) {
     if (fs.existsSync(exclusionFilePath)) {
@@ -16,11 +15,13 @@ function retrieveExclusionPatterns(exclusionFilePath) {
 }
 
 function isExcluded(filePath, exclusionPatterns) {
-    if (exclusionPatterns.some(pattern => minimatch.minimatch(filePath, pattern)) !== true) {
-        console.log("not excluded")
-    }
     return exclusionPatterns.some(pattern => {
-        return minimatch.minimatch(filePath, pattern)
+        if (pattern.startsWith('/') && pattern.endsWith('/')) {
+            const regex = new RegExp(pattern.slice(1, -1));
+            return regex.test(filePath);
+        } else {
+            return filePath.includes(pattern);
+        }
     });
 }
 

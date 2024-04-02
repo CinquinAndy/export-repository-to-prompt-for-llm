@@ -4,6 +4,8 @@ This repository provides a script that exports the contents of a project reposit
 ChatGPT, Mistral, and others. The script processes code files in the project, excluding specified files and folders based on patterns defined in a `.gitignore` file and an
 optional `.exclusionListConfig` file. It also ignores lines between `<svg>` and `</svg>` tags.
 
+! This script is useful for preparing code repositories for input to LLMs, enabling the models to learn from the codebase and generate code-related text.
+
 ## Table of Contents
 
 - [Features](#features)

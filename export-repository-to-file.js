@@ -19,7 +19,9 @@ function isExcluded(filePath, exclusionPatterns) {
     if (exclusionPatterns.some(pattern => minimatch.minimatch(filePath, pattern)) !== true) {
         console.log("not excluded")
     }
-    return exclusionPatterns.some(pattern => minimatch.minimatch(filePath, pattern));
+    return exclusionPatterns.some(pattern => {
+        return minimatch.minimatch(filePath, pattern)
+    });
 }
 
 function isSpecialFile(filePath) {

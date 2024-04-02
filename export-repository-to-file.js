@@ -26,10 +26,13 @@ function isExcluded(filePath, exclusionPatterns) {
 }
 
 function isSpecialFile(filePath) {
-    const specialExtensions = ['.pdf', '.img', '.svg', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.webp', '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus', '.mp4', '.mkv', '.webm', '.avi', '.mov', '.wmv', '.flv', '.3gp', '.mpg', '.mpeg', '.m4v', '.m2v', '.m2ts'];
+    const specialExtensions = ['.pdf', '.img', '.svg', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.webp',
+        '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus', '.mp4', '.mkv', '.webm',
+        '.avi', '.mov', '.wmv', '.flv', '.3gp', '.mpg', '.mpeg', '.m4v', '.m2v', '.m2ts'];
     const extension = path.extname(filePath).toLowerCase();
     return specialExtensions.includes(extension);
 }
+
 
 function processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput) {
     const allFiles = glob.sync('**/*', {cwd: projectPath, nodir: true, dot: true});
@@ -41,7 +44,10 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
         const filePath = path.join(projectPath, file);
         const relativeFilePath = path.relative(projectPath, filePath);
 
-        if (!isExcluded(relativeFilePath, exclusionPatterns) && !isExcluded(relativeFilePath, additionalExclusionPatterns) && !isExcluded(relativeFilePath, exclusionListConfig) && !isSpecialFile(filePath)) {
+        if (
+            !isExcluded(relativeFilePath, [...exclusionPatterns, ...additionalExclusionPatterns, ...exclusionListConfig]) &&
+            !isSpecialFile(filePath)
+        ) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
             const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
 

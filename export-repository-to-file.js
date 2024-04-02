@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const {program} = require('commander');
 const glob = require('glob');
-const {tqdm} = require('tqdm');
+const cliProgress = require('cli-progress');
 
 function retrieveExclusionPatterns(exclusionFilePath) {
     if (fs.existsSync(exclusionFilePath)) {
@@ -29,12 +29,16 @@ function isSpecialFile(filePath) {
 }
 
 function processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput) {
-    const allFiles = glob.sync('**/*', {cwd: projectPath, nodir: true, dot: true});
-    const progressBar = new tqdm(allFiles.length, {unit: 'file', desc: 'Processing files'});
+    const allFiles = glob.sync('**/*', { cwd: projectPath, nodir: true, dot: true });
+    console.log(`Processing ${allFiles.length} files...`)
+    const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
-    allFiles.forEach(file => {
+    progressBar.start(allFiles.length, 0);
+
+    allFiles.forEach((file, index) => {
         const filePath = path.join(projectPath, file);
         const relativeFilePath = path.relative(projectPath, filePath);
+        console.log(`Processing ${relativeFilePath}...`)
 
         if (
             !isExcluded(relativeFilePath, exclusionPatterns) &&
@@ -54,7 +58,7 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
             }
         }
 
-        progressBar.update(1);
+        progressBar.update(index + 1);
     });
 
     progressBar.stop();

@@ -10,11 +10,11 @@
     "start": "node export-repository-to-file.js"
   },
   "dependencies": {
+    "cli-progress": "^3.12.0",
     "commander": "^12.0.0",
     "glob": "^10.3.12",
     "python-shell": "5.0.0",
-    "semver": "7.6.0",
-    "tqdm": "^2.0.3"
+    "semver": "7.6.0"
   },
   "author": "Cinquin Andy",
   "license": "MIT"

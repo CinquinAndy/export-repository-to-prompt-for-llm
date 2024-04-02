@@ -1,53 +1,120 @@
 #!/usr/bin/env node
 
-const {spawn} = require('child_process');
+const fs = require('fs');
 const path = require('path');
+const {program} = require('commander');
+const glob = require('glob');
+const {tqdm} = require('tqdm');
 
-// Install Python dependencies
-const requirementsPath = path.join(__dirname, 'requirements.txt');
-const installDeps = spawn('pip', ['install', '-r', requirementsPath]);
-
-installDeps.stdout.on('data', (data) => {
-    console.log(data.toString());
-});
-
-installDeps.stderr.on('data', (data) => {
-    console.error(data.toString());
-});
-
-installDeps.on('close', (code) => {
-    if (code !== 0) {
-        console.error(`Failed to install Python dependencies. Exited with code ${code}`);
-        process.exit(1);
+function retrieveExclusionPatterns(exclusionFilePath) {
+    if (fs.existsSync(exclusionFilePath)) {
+        const exclusionContent = fs.readFileSync(exclusionFilePath, 'utf8');
+        return exclusionContent.split('\n').filter(pattern => pattern.trim() !== '' && !pattern.startsWith('#'));
     }
+    return [];
+}
 
+function isExcluded(filePath, exclusionPatterns) {
+    return exclusionPatterns.some(pattern => {
+        return filePath.startsWith(pattern) || glob.sync(pattern, {matchBase: true, dot: true}).includes(filePath);
+    });
+}
 
-    const pythonScript = path.join(__dirname, 'export-repository-to-file.py');
-    const projectPath = process.argv[2];
-    const preamblePath = process.argv[3] || '';
-    const outputPath = process.argv[4] || '';
+function isSpecialFile(filePath) {
+    const specialExtensions = ['.pdf', '.img', '.svg', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.webp',
+        '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus', '.mp4', '.mkv', '.webm',
+        '.avi', '.mov', '.wmv', '.flv', '.3gp', '.mpg', '.mpeg', '.m4v', '.m2v', '.m2ts'];
+    const extension = path.extname(filePath).toLowerCase();
+    return specialExtensions.includes(extension);
+}
 
-    const args = [pythonScript, projectPath];
+function processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput) {
+    const allFiles = glob.sync('**/*', {cwd: projectPath, nodir: true, dot: true});
+    const progressBar = new tqdm(allFiles.length, {unit: 'file', desc: 'Processing files'});
 
-    if (preamblePath) {
-        args.push('-p', preamblePath);
-    }
+    allFiles.forEach(file => {
+        const filePath = path.join(projectPath, file);
+        const relativeFilePath = path.relative(projectPath, filePath);
 
-    if (outputPath) {
-        args.push('-o', outputPath);
-    }
+        if (
+            !isExcluded(relativeFilePath, exclusionPatterns) &&
+            !isExcluded(relativeFilePath, additionalExclusionPatterns) &&
+            !isExcluded(relativeFilePath, exclusionListConfig) &&
+            !isSpecialFile(filePath)
+        ) {
+            const fileContent = fs.readFileSync(filePath, 'utf8');
+            const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
 
-    const pythonProcess = spawn('python', args);
+            outputFile.write("-".repeat(4) + "\n");
+            outputFile.write(relativeFilePath + "\n");
+            outputFile.write(cleanedContent + "\n");
 
-    pythonProcess.stdout.on('data', (data) => {
-        console.log(data.toString());
+            if (cleanedContent.split('\n').length > 250 || cleanedContent.length > 2500) {
+                largeFilesOutput.write(relativeFilePath + "\n");
+            }
+        }
+
+        progressBar.update(1);
     });
 
-    pythonProcess.stderr.on('data', (data) => {
-        console.error(data.toString());
-    });
+    progressBar.stop();
+}
 
-    pythonProcess.on('close', (code) => {
-        console.log(`Python script exited with code ${code}`);
-    });
-});
+function main() {
+    program
+        .argument('<projectPath>', 'The path to the project directory')
+        .option('-p, --preamble <preambleFile>', 'The path to the preamble file')
+        .option('-o, --output <outputFile>', 'The path to the output file', 'output.txt')
+        .option('-l, --largeFiles <largeFilesOutput>', 'The path to the large files output', 'large_files_output.txt')
+        .option('-e, --exclusionPatterns <exclusionPatternsFile>', 'The path to the additional exclusion patterns file')
+        .parse(process.argv);
+
+    const projectPath = program.args[0];
+    const preambleFile = program.opts().preamble;
+    const outputFilePath = program.opts().output;
+    const largeFilesOutputPath = program.opts().largeFiles;
+    const additionalExclusionPatternsFilePath = program.opts().exclusionPatterns;
+
+    const exclusionFilePath = path.join(projectPath, '.gitignore');
+    const exclusionPatterns = retrieveExclusionPatterns(exclusionFilePath);
+
+    const additionalExclusionPatterns = additionalExclusionPatternsFilePath
+        ? retrieveExclusionPatterns(additionalExclusionPatternsFilePath)
+        : [];
+
+    const exclusionListConfigPath = path.join(projectPath, '.exclusionListConfig');
+    const exclusionListConfig = retrieveExclusionPatterns(exclusionListConfigPath);
+
+    const outputFileDir = path.dirname(outputFilePath);
+    if (!fs.existsSync(outputFileDir)) {
+        fs.mkdirSync(outputFileDir, {recursive: true});
+    }
+
+    const largeFilesOutputDir = path.dirname(largeFilesOutputPath);
+    if (!fs.existsSync(largeFilesOutputDir)) {
+        fs.mkdirSync(largeFilesOutputDir, {recursive: true});
+    }
+
+    const outputFile = fs.createWriteStream(outputFilePath);
+    const largeFilesOutput = fs.createWriteStream(largeFilesOutputPath);
+
+    if (preambleFile) {
+        const preambleContent = fs.readFileSync(preambleFile, 'utf8');
+        outputFile.write(preambleContent + "\n");
+    } else {
+        outputFile.write("The following text represents a project with code. The structure of the text consists of sections beginning with ----, followed by a single line containing the file path and file name, and then a variable number of lines containing the file contents. The text representing the project ends when the symbols --END-- are encountered. Any further text beyond --END-- is meant to be interpreted as instructions using the aforementioned project as context.\n");
+    }
+
+    processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput);
+
+    outputFile.write("--END--");
+    outputFile.end();
+    largeFilesOutput.end();
+
+    console.log(`Project contents written to ${outputFilePath}.`);
+    console.log(`Files with more than 250 lines of code or 2500 characters listed in ${largeFilesOutputPath}.`);
+}
+
+if (require.main === module) {
+    main();
+}

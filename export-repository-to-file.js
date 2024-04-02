@@ -5,7 +5,7 @@ const path = require('path');
 const {program} = require('commander');
 const glob = require('glob');
 const cliProgress = require('cli-progress');
-const {minimatch} = require('minimatch');
+const minimatch = require('minimatch');
 
 function retrieveExclusionPatterns(exclusionFilePath) {
     if (fs.existsSync(exclusionFilePath)) {
@@ -16,22 +16,20 @@ function retrieveExclusionPatterns(exclusionFilePath) {
 }
 
 function isExcluded(filePath, exclusionPatterns) {
-    if (exclusionPatterns.some(pattern => minimatch(filePath, pattern)) !== true){
+    if (exclusionPatterns.some(pattern => minimatch.minimatch(filePath, pattern)) !== true) {
         console.log("not excluded")
     }
-    return exclusionPatterns.some(pattern => minimatch(filePath, pattern));
+    return exclusionPatterns.some(pattern => minimatch.minimatch(filePath, pattern));
 }
 
 function isSpecialFile(filePath) {
-    const specialExtensions = ['.pdf', '.img', '.svg', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.webp',
-        '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus', '.mp4', '.mkv', '.webm',
-        '.avi', '.mov', '.wmv', '.flv', '.3gp', '.mpg', '.mpeg', '.m4v', '.m2v', '.m2ts'];
+    const specialExtensions = ['.pdf', '.img', '.svg', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.tif', '.ico', '.webp', '.mp3', '.wav', '.ogg', '.flac', '.aac', '.wma', '.m4a', '.opus', '.mp4', '.mkv', '.webm', '.avi', '.mov', '.wmv', '.flv', '.3gp', '.mpg', '.mpeg', '.m4v', '.m2v', '.m2ts'];
     const extension = path.extname(filePath).toLowerCase();
     return specialExtensions.includes(extension);
 }
 
 function processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput) {
-    const allFiles = glob.sync('**/*', { cwd: projectPath, nodir: true, dot: true });
+    const allFiles = glob.sync('**/*', {cwd: projectPath, nodir: true, dot: true});
     const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
     progressBar.start(allFiles.length, 0);
@@ -40,12 +38,7 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
         const filePath = path.join(projectPath, file);
         const relativeFilePath = path.relative(projectPath, filePath);
 
-        if (
-            !isExcluded(relativeFilePath, exclusionPatterns) &&
-            !isExcluded(relativeFilePath, additionalExclusionPatterns) &&
-            !isExcluded(relativeFilePath, exclusionListConfig) &&
-            !isSpecialFile(filePath)
-        ) {
+        if (!isExcluded(relativeFilePath, exclusionPatterns) && !isExcluded(relativeFilePath, additionalExclusionPatterns) && !isExcluded(relativeFilePath, exclusionListConfig) && !isSpecialFile(filePath)) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
             const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
 
@@ -82,9 +75,7 @@ function main() {
     const exclusionFilePath = path.join(projectPath, '.gitignore');
     const exclusionPatterns = retrieveExclusionPatterns(exclusionFilePath);
 
-    const additionalExclusionPatterns = additionalExclusionPatternsFilePath
-        ? retrieveExclusionPatterns(additionalExclusionPatternsFilePath)
-        : [];
+    const additionalExclusionPatterns = additionalExclusionPatternsFilePath ? retrieveExclusionPatterns(additionalExclusionPatternsFilePath) : [];
 
     const exclusionListConfigPath = path.join(projectPath, '.exclusionListConfig');
     const exclusionListConfig = retrieveExclusionPatterns(exclusionListConfigPath);

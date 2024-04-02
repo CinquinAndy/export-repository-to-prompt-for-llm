@@ -1,16 +1,19 @@
-# Export Repository to Prompt / LLM ready file
+# Export Repository to Prompt / LLM Ready File
 
-It's a Python script that exports the contents of a project repository into a structured text file. The script processes code files in the project,
-excluding specified files and folders based on patterns defined in a `.gitignore` file. It also ignores lines between `<svg>` and `</svg>` tags. The resulting text file can be used
-as input for Large Language Models (LLMs) like ChatGPT, Mistral, and others, enabling them to understand and interact with the project's codebase.
+This repository provides a script that exports the contents of a project repository into a structured text file, making it suitable for use with Large Language Models (LLMs) like
+ChatGPT, Mistral, and others. The script processes code files in the project, excluding specified files and folders based on patterns defined in a `.gitignore` file and an
+optional `.exclusionListConfig` file. It also ignores lines between `<svg>` and `</svg>` tags.
 
 ## Table of Contents
 
 - [Features](#features)
 - [Installation](#installation)
-- [Usage](#usage)
-    - [Python Script](#python-script)
     - [NPM Package](#npm-package)
+    - [Python Script](#python-script)
+- [Usage](#usage)
+    - [NPM Package](#npm-package-1)
+    - [Node.js Script](#nodejs-script)
+    - [Python Script](#python-script-1)
 - [Configuration](#configuration)
 - [How It Works](#how-it-works)
 - [Example](#example)
@@ -21,14 +24,22 @@ as input for Large Language Models (LLMs) like ChatGPT, Mistral, and others, ena
 ## Features
 
 - Recursively processes code files in a project directory
-- Excludes files and directories specified in a `.gitignore` file
+- Excludes files and directories specified in a `.gitignore` file and an optional `.exclusionListConfig` file
 - Ignores lines between `<svg>` and `</svg>` tags
 - Supports an optional preamble file to include at the beginning of the output
 - Generates a structured text file suitable for input to LLMs
 - Provides a progress bar to track the processing of files
-- Available as both a Python script and an NPM package
+- Available as both an NPM package (recommended) and a Python script
 
 ## Installation
+
+### NPM Package
+
+1. Install the NPM package globally by running:
+   ```
+   npm install -g export-repository-to-file
+   ```
+   After installation, you can use the package with the `export-repo` command from anywhere in your terminal.
 
 ### Python Script
 
@@ -38,55 +49,119 @@ as input for Large Language Models (LLMs) like ChatGPT, Mistral, and others, ena
    pip install -r requirements.txt
    ```
 
-### NPM Package
-
-1. Install the NPM package globally by running:
-   ```
-   npm install -g export-repository-to-file
-   ```
-   then you can use the package with the `export-repository-to-file` command. From everywhere in your terminal.
-
 ## Usage
-
-### Python Script
-
-To use the Export Repository to File script, follow these steps:
-
-1. Open a terminal or command prompt and navigate to the directory containing the script.
-2. Run the script with the following command:
-   ```
-   python export-repository-to-file.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt]
-   ```
-    - `/path/to/project`: The path to the project directory you want to export.
-    - `-p /path/to/preamble.txt` (optional): The path to a preamble file to include at the beginning of the output file.
-    - `-o /path/to/output_file.txt` (optional): The path to the output file. If not specified, the output will be written to `output.txt` in the current directory.
-3. The script will process the project files and generate the output file.
 
 ### NPM Package
 
 After installing the package, you can use the `export-repo` command from anywhere in your terminal:
-``
+
+```
 export-repo <projectPath> [options]
-``
+```
+
 - `<projectPath>` (required): The path to the project directory you want to process.
 
 Available options:
+
 - `-p, --preamble <preambleFile>`: The path to the preamble file containing text to be inserted at the beginning of the output file.
 - `-o, --output <outputFile>`: The path to the output file where the project contents will be written. Defaults to `output.txt` in the current directory.
-- `-l, --largeFiles <largeFilesOutput>`: The path to the file where the list of files with more than 250 lines of code or 2500 characters will be written. Defaults to `large_files_output.txt` in the current directory.
-- `-e, --exclusionPatterns <exclusionPatternsFile>`: The path to a file containing additional exclusion patterns, one per line, to exclude specific files or folders from processing. This file is used in addition to the `.gitignore` file.
+- `-l, --largeFiles <largeFilesOutput>`: The path to the file where the list of files with more than 250 lines of code or 2500 characters will be written. Defaults
+  to `large_files_output.txt` in the current directory.
+- `-e, --exclusionPatterns <exclusionPatternsFile>`: The path to a file containing additional exclusion patterns, one per line, to exclude specific files or folders from
+  processing. This file is used in addition to the `.gitignore` file.
 
 Example usage:
-``
+
+```
 export-repo /path/to/project -o /path/to/output/output.txt -e /path/to/exclusion/patterns.txt
-``
+```
+
+### Node.js Script
+
+#### Prerequisites
+
+Make sure you have Node.js installed on your system. You can download and install Node.js from the official Node.js website: [https://nodejs.org](https://nodejs.org)
+
+#### Installation
+
+1. Clone this repository to your local machine:
+   ```
+   git clone https://github.com/your-username/your-repo.git
+   ```
+2. Navigate to the project directory:
+   ```
+   cd your-repo
+   ```
+3. Install the required dependencies:
+   ```
+   npm install
+   ```
+
+#### Usage
+
+To use the Node.js script directly, run the following command:
+
+```
+node export-repository-to-file.js <projectPath> [options]
+```
+
+- `<projectPath>` (required): The path to the project directory you want to process.
+
+Available options:
+
+- `-p, --preamble <preambleFile>`: The path to the preamble file containing text to be inserted at the beginning of the output file.
+- `-o, --output <outputFile>`: The path to the output file where the project contents will be written. Defaults to `output.txt` in the current directory.
+- `-l, --largeFiles <largeFilesOutput>`: The path to the file where the list of files with more than 250 lines of code or 2500 characters will be written. Defaults
+  to `large_files_output.txt` in the current directory.
+- `-e, --exclusionPatterns <exclusionPatternsFile>`: The path to a file containing additional exclusion patterns, one per line, to exclude specific files or folders from
+  processing. This file is used in addition to the `.gitignore` file.
+
+Example usage:
+
+```
+node export-repository-to-file.js /path/to/project -o /path/to/output/output.txt -e /path/to/exclusion/patterns.txt
+```
+
+### Python Script
+
+#### Prerequisites
+
+Make sure you have Python installed on your system. You can download and install Python from the official Python website: [https://www.python.org](https://www.python.org)
+
+#### Usage
+
+To use the Python script, run the following command:
+
+```
+python export-repository-to-file.py <projectPath> [options]
+```
+
+- `<projectPath>` (required): The path to the project directory you want to process.
+
+Available options:
+
+- `-p, --preamble <preambleFile>`: The path to the preamble file containing text to be inserted at the beginning of the output file.
+- `-o, --output <outputFile>`: The path to the output file where the project contents will be written. Defaults to `output.txt` in the current directory.
+- `-l, --largeFiles <largeFilesOutput>`: The path to the file where the list of files with more than 250 lines of code or 2500 characters will be written. Defaults
+  to `large_files_output.txt` in the current directory.
+- `-e, --exclusionPatterns <exclusionPatternsFile>`: The path to a file containing additional exclusion patterns, one per line, to exclude specific files or folders from
+  processing. This file is used in addition to the `.gitignore` file.
+
+Example usage:
+
+```
+python export-repository-to-file.py /path/to/project -o /path/to/output/output.txt -e /path/to/exclusion/patterns.txt
+```
 
 ## Configuration
 
 The script uses a `.gitignore` file to determine which files and directories to exclude from the export. By default, it looks for the `.gitignore` file in the project directory. If
 not found, it tries to use the `.gitignore` file in the current directory as a fallback.
 
-You can customize the exclusion patterns by modifying the `.gitignore` file. Each line in the file represents a pattern to match against file and directory names. For example:
+Additionally, you can create a `.exclusionListConfig` file in the project directory to specify custom exclusion patterns specific to the project.
+
+You can customize the exclusion patterns by modifying the `.gitignore` and `.exclusionListConfig` files. Each line in the files represents a pattern to match against file and
+directory names. For example:
 
 ```
 node_modules/
@@ -94,12 +169,12 @@ node_modules/
 *.tmp
 ```
 
-The above `.gitignore` file will exclude the `node_modules` directory and any files with the extensions `.log` and `.tmp`.
+The above example will exclude the `node_modules` directory and any files with the extensions `.log` and `.tmp`.
 
 ## How It Works
 
-1. The script retrieves the exclusion patterns from the `.gitignore` file.
-2. It recursively processes code files in the project directory, excluding files and directories that match the patterns in the `.gitignore` file.
+1. The script retrieves the exclusion patterns from the `.gitignore` file and the `.exclusionListConfig` file (if present).
+2. It recursively processes code files in the project directory, excluding files and directories that match the exclusion patterns.
 3. For each code file, it reads the contents and removes lines between `<svg>` and `</svg>` tags.
 4. It writes the processed file contents to the output file in a structured format, with each file separated by `----` and the file path and name included.
 5. If a preamble file is specified, it is included at the beginning of the output file.
@@ -112,6 +187,7 @@ Suppose you have a project directory `/path/to/project` with the following struc
 ```
 /path/to/project
 ├── .gitignore
+├── .exclusionListConfig
 ├── file1.js
 ├── file2.py
 ├── node_modules
@@ -126,78 +202,17 @@ And the `.gitignore` file contains:
 node_modules/
 ```
 
-## Usage
+And the `.exclusionListConfig` file contains:
 
-This repository provides two scripts, one in Python and one in Node.js, to export the contents of a project to a text file. Both scripts offer similar functionality and can be used interchangeably depending on your preferred environment.
+```
+file2.py
+```
 
-### Python Script
+Running the script with the following command:
 
-#### Prerequisites
-
-Make sure you have Python installed on your system. You can download and install Python from the official Python website: [https://www.python.org](https://www.python.org)
-
-#### Usage
-
-To use the Python script, run the following command:
-``
-python export-repository-to-file.py <projectPath> [options]
-``
-- `<projectPath>` (required): The path to the project directory you want to process.
-
-Available options:
-- `-p, --preamble <preambleFile>`: The path to the preamble file containing text to be inserted at the beginning of the output file.
-- `-o, --output <outputFile>`: The path to the output file where the project contents will be written. Defaults to `output.txt` in the current directory.
-- `-l, --largeFiles <largeFilesOutput>`: The path to the file where the list of files with more than 250 lines of code or 2500 characters will be written. Defaults to `large_files_output.txt` in the current directory.
-- `-e, --exclusionPatterns <exclusionPatternsFile>`: The path to a file containing additional exclusion patterns, one per line, to exclude specific files or folders from processing. This file is used in addition to the `.gitignore` file.
-
-Example usage:
-``
-python export-repository-to-file.py /path/to/project -o /path/to/output/output.txt -e /path/to/exclusion/patterns.txt
-``
-
-### Node.js Script
-
-#### Prerequisites
-
-Make sure you have Node.js installed on your system. You can download and install Node.js from the official Node.js website: [https://nodejs.org](https://nodejs.org)
-
-#### Installation
-
-1. Clone this repository to your local machine:
-   `git clone https://github.com/your-username/your-repo.git`
-2. Navigate to the project directory:
-   `cd your-repo`
-3. Install the required dependencies:
-   `npm install`
-
-#### Usage
-
-To use the Node.js script, run the following command:
-``
-node export-repository-to-file.js <projectPath> [options]
-``
-- `<projectPath>` (required): The path to the project directory you want to process.
-
-Available options:
-- `-p, --preamble <preambleFile>`: The path to the preamble file containing text to be inserted at the beginning of the output file.
-- `-o, --output <outputFile>`: The path to the output file where the project contents will be written. Defaults to `output.txt` in the current directory.
-- `-l, --largeFiles <largeFilesOutput>`: The path to the file where the list of files with more than 250 lines of code or 2500 characters will be written. Defaults to `large_files_output.txt` in the current directory.
-- `-e, --exclusionPatterns <exclusionPatternsFile>`: The path to a file containing additional exclusion patterns, one per line, to exclude specific files or folders from processing. This file is used in addition to the `.gitignore` file.
-
-Example usage:
-``
-node export-repository-to-file.js /path/to/project -o /path/to/output/output.txt -e /path/to/exclusion/patterns.txt
-``
-
-Both scripts will process the project located at `/path/to/project`, apply the exclusion patterns from the `.gitignore` file, the additional exclusion patterns specified in `/path/to/exclusion/patterns.txt`, and the exclusion patterns from the `.exclusionListConfig` file (if present in the project directory). The project contents will be written to the `/path/to/output/output.txt` file. The list of files with more than 250 lines of code or 2500 characters will be written to the `large_files_output.txt` file in the current directory.
-
-Make sure to replace `/path/to/project`, `/path/to/output/output.txt`, and `/path/to/exclusion/patterns.txt` with the appropriate paths based on your environment.
-
-Choose the script that best fits your preferred programming language and environment. Both scripts provide a convenient way to export the contents of a project to a text file while applying exclusion patterns.
-
-
-
-
+```
+export-repo /path/to/project -p /path/to/project/preamble.txt -o output.txt
+```
 
 Will generate an `output.txt` file with the following content:
 
@@ -206,13 +221,10 @@ Will generate an `output.txt` file with the following content:
 ----
 file1.js
 [Contents of file1.js]
-----
-file2.py
-[Contents of file2.py]
 --END--
 ```
 
-The `node_modules` directory and its contents will be excluded from the output.
+The `node_modules` directory and its contents, as well as `file2.py`, will be excluded from the output.
 
 ## Contributing
 

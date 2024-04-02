@@ -121,16 +121,27 @@ And the `.gitignore` file contains:
 node_modules/
 ```
 
-Running the script with the following command:
+## Usage
+
+To use the script, run the following command:
 
 ```
-python export-repository-to-file.py /path/to/project -p /path/to/project/preamble.txt -o output.txt
+python export-repository-to-file.py /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt] [-l /path/to/large_files_output.txt] [-e /path/to/additional_exclusion_patterns.txt]
 ```
+- `/path/to/project`: The path to the project directory you want to process.
+- `-p /path/to/preamble.txt` (optional): The path to a preamble file containing text to be inserted at the beginning of the output file.
+- `-o /path/to/output_file.txt` (optional): The path to the output file where the project contents will be written. Defaults to `output.txt` in the current directory.
+- `-l /path/to/large_files_output.txt` (optional): The path to the file where the list of files with more than 250 lines of code or 2500 characters will be written. Defaults to `large_files_output.txt` in the current directory.
+- `-e /path/to/additional_exclusion_patterns.txt` (optional): The path to a file containing additional exclusion patterns, one per line, to exclude specific files or folders from processing. This file is used in addition to the `.gitignore` file.
+
+The script will process the project, apply the exclusion patterns from the `.gitignore` file, the additional exclusion patterns file (if provided), and the `.exclusionListConfig` file (if present in the project directory). It will write the project contents to the specified output file. It will also generate a list of files with more than 250 lines of code or 2500 characters in the specified large files output file.
+
+The `.exclusionListConfig` file should be placed in the project directory and should contain one exclusion pattern per line. This file provides a permanent way to specify exclusion patterns specific to the project.
 
 Or, if using the NPM package:
 
 ```
-npm start /path/to/project -p /path/to/project/preamble.txt -o output.txt
+npm start /path/to/project [-p /path/to/preamble.txt] [-o /path/to/output_file.txt] [-l /path/to/large_files_output.txt] [-e /path/to/additional_exclusion_patterns.txt]
 ```
 
 Will generate an `output.txt` file with the following content:

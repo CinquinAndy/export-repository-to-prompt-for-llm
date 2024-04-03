@@ -15,7 +15,10 @@ function retrieveExclusionPatterns(exclusionFilePath) {
 }
 
 function isExcluded(filePath, exclusionPatterns) {
-    return exclusionPatterns.some(pattern => filePath.startsWith(pattern));
+    return exclusionPatterns.some(pattern => {
+        const cleanedPattern = pattern.replace(/\r/g, ''); // Remove carriage return characters
+        return filePath.includes(cleanedPattern);
+    });
 }
 
 function isSpecialFile(filePath) {
@@ -36,10 +39,10 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
         const filePath = path.join(projectPath, file);
         const relativeFilePath = path.relative(projectPath, filePath);
 
+        const allExclusionPatterns = [...exclusionPatterns, ...additionalExclusionPatterns, ...exclusionListConfig];
+
         if (
-            !isExcluded(relativeFilePath, exclusionPatterns) &&
-            !isExcluded(relativeFilePath, additionalExclusionPatterns) &&
-            !isExcluded(relativeFilePath, exclusionListConfig) &&
+            !isExcluded(relativeFilePath, allExclusionPatterns) &&
             !isSpecialFile(filePath)
         ) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
@@ -64,7 +67,7 @@ function main() {
     program
         .argument('<projectPath>', 'The path to the project directory')
         .option('-p, --preamble <preambleFile>', 'The path to the preamble file')
-        .option('-o, --output <outputFile>', 'The path to the output file', 'output.txt')
+        .option('-o, --output <outputFile>', 'The path to the output file', 'outputz.txt')
         .option('-l, --largeFiles <largeFilesOutput>', 'The path to the large files output', 'large_files_output.txt')
         .option('-e, --exclusionPatterns <exclusionPatternsFile>', 'The path to the additional exclusion patterns file')
         .parse(process.argv);

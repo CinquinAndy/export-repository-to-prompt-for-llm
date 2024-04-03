@@ -16,12 +16,7 @@ function retrieveExclusionPatterns(exclusionFilePath) {
 
 function isExcluded(filePath, exclusionPatterns) {
     return exclusionPatterns.some(pattern => {
-        if (pattern.startsWith('/') && pattern.endsWith('/')) {
-            const regex = new RegExp(pattern.slice(1, -1));
-            return regex.test(filePath);
-        } else {
-            return filePath.includes(pattern);
-        }
+        return filePath.includes(pattern) || glob.sync(pattern, {matchBase: true, dot: true}).includes(filePath);
     });
 }
 
@@ -33,30 +28,59 @@ function isSpecialFile(filePath) {
     return specialExtensions.includes(extension);
 }
 
-
 function processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput) {
-    const allFiles = glob.sync('**/*', {cwd: projectPath, nodir: true, dot: true});
+    const allPaths = glob.sync('**', {cwd: projectPath, dot: true});
     const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
-    progressBar.start(allFiles.length, 0);
+    progressBar.start(allPaths.length, 0);
 
-    allFiles.forEach((file, index) => {
-        const filePath = path.join(projectPath, file);
-        const relativeFilePath = path.relative(projectPath, filePath);
+    allPaths.forEach((entry, index) => {
+        const fullPath = path.join(projectPath, entry);
+        const relativePath = path.relative(projectPath, fullPath);
 
         if (
-            !isExcluded(relativeFilePath, [...exclusionPatterns, ...additionalExclusionPatterns, ...exclusionListConfig]) &&
-            !isSpecialFile(filePath)
+            !isExcluded(relativePath, exclusionPatterns) &&
+            !isExcluded(relativePath, additionalExclusionPatterns) &&
+            !isExcluded(relativePath, exclusionListConfig)
         ) {
-            const fileContent = fs.readFileSync(filePath, 'utf8');
-            const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
+            if (fs.statSync(fullPath).isDirectory()) {
+                // Process directory
+                const directoryFiles = glob.sync('**', {cwd: fullPath, nodir: true, dot: true});
 
-            outputFile.write("-".repeat(4) + "\n");
-            outputFile.write(relativeFilePath + "\n");
-            outputFile.write(cleanedContent + "\n");
+                directoryFiles.forEach(file => {
+                    const filePath = path.join(fullPath, file);
+                    const relativeFilePath = path.relative(projectPath, filePath);
 
-            if (cleanedContent.split('\n').length > 250 || cleanedContent.length > 2500) {
-                largeFilesOutput.write(relativeFilePath + "\n");
+                    if (
+                        !isExcluded(relativeFilePath, exclusionPatterns) &&
+                        !isExcluded(relativeFilePath, additionalExclusionPatterns) &&
+                        !isExcluded(relativeFilePath, exclusionListConfig) &&
+                        !isSpecialFile(filePath)
+                    ) {
+                        const fileContent = fs.readFileSync(filePath, 'utf8');
+                        const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
+
+                        outputFile.write("-".repeat(4) + "\n");
+                        outputFile.write(relativeFilePath + "\n");
+                        outputFile.write(cleanedContent + "\n");
+
+                        if (cleanedContent.split('\n').length > 250 || cleanedContent.length > 2500) {
+                            largeFilesOutput.write(relativeFilePath + "\n");
+                        }
+                    }
+                });
+            } else if (fs.statSync(fullPath).isFile() && !isSpecialFile(fullPath)) {
+                // Process file
+                const fileContent = fs.readFileSync(fullPath, 'utf8');
+                const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
+
+                outputFile.write("-".repeat(4) + "\n");
+                outputFile.write(relativePath + "\n");
+                outputFile.write(cleanedContent + "\n");
+
+                if (cleanedContent.split('\n').length > 250 || cleanedContent.length > 2500) {
+                    largeFilesOutput.write(relativePath + "\n");
+                }
             }
         }
 
@@ -84,7 +108,9 @@ function main() {
     const exclusionFilePath = path.join(projectPath, '.gitignore');
     const exclusionPatterns = retrieveExclusionPatterns(exclusionFilePath);
 
-    const additionalExclusionPatterns = additionalExclusionPatternsFilePath ? retrieveExclusionPatterns(additionalExclusionPatternsFilePath) : [];
+    const additionalExclusionPatterns = additionalExclusionPatternsFilePath
+        ? retrieveExclusionPatterns(additionalExclusionPatternsFilePath)
+        : [];
 
     const exclusionListConfigPath = path.join(projectPath, '.exclusionListConfig');
     const exclusionListConfig = retrieveExclusionPatterns(exclusionListConfigPath);
@@ -99,8 +125,8 @@ function main() {
         fs.mkdirSync(largeFilesOutputDir, {recursive: true});
     }
 
-    const outputFile = fs.createWriteStream(outputFilePath);
-    const largeFilesOutput = fs.createWriteStream(largeFilesOutputPath);
+    const outputFile = fs.createWriteStream(outputFilePath, {highWaterMark: 1024 * 1024});
+    const largeFilesOutput = fs.createWriteStream(largeFilesOutputPath, {highWaterMark: 1024 * 1024});
 
     if (preambleFile) {
         const preambleContent = fs.readFileSync(preambleFile, 'utf8');

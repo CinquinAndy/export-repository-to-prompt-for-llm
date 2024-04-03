@@ -68,8 +68,8 @@ function main() {
     program
         .argument('<projectPath>', 'The path to the project directory')
         .option('-p, --preamble <preambleFile>', 'The path to the preamble file')
-        .option('-o, --output <outputFile>', 'The path to the output file', 'result/output.txt')
-        .option('-l, --largeFiles <largeFilesOutput>', 'The path to the large files output', 'result/large_files_output.txt')
+        .option('-o, --output <outputFile>', 'The path to the output file', 'output.txt')
+        .option('-l, --largeFiles <largeFilesOutput>', 'The path to the large files output', 'large_files_output.txt')
         .option('-e, --exclusionPatterns <exclusionPatternsFile>', 'The path to the additional exclusion patterns file')
         .parse(process.argv);
 

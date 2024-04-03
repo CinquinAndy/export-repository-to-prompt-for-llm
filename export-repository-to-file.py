@@ -63,8 +63,8 @@ def process_project(project_path, exclusion_patterns, additional_exclusion_patte
             file_path = os.path.join(root, file)
             relative_file_path = os.path.relpath(file_path, project_path)
             if not is_excluded(relative_file_path, exclusion_patterns + additional_exclusion_patterns + exclusion_list_config) and not is_special_file(file_path):
-                with open(file_path, 'r', errors='ignore') as file:
-                    contents = file.read()
+                with open(file_path, 'r', errors='ignore') as file_opened:
+                    contents = file_opened.read()
                     # Ignore lines between <svg> and </svg> tags
                     contents = re.sub(r'<svg>.*?</svg>', '', contents, flags=re.DOTALL)
                     output_file.write("-" * 4 + "\n")
@@ -76,6 +76,11 @@ def process_project(project_path, exclusion_patterns, additional_exclusion_patte
                         large_files_output.write(f"{relative_file_path}\n")
 
             progress_bar.update(1)
+
+        print(f"Processed {root}")
+        print(f"Files processed: {progress_bar.n}/{total_files}")
+        print(f"Files with more than 250 lines of code or 2500 characters: {large_files_output.tell() / 1024:.2f} KB")
+        print(f"Output file size: {output_file.tell() / 1024:.2f} KB")
 
     progress_bar.close()
 
@@ -114,7 +119,8 @@ def main():
         additional_exclusion_patterns = retrieve_exclusion_patterns(additional_exclusion_patterns_file_path)
     else:
         additional_exclusion_patterns = []
-    exclusion_list_config_file_path = os.path.join(project_path, ".exclusionListConfig")
+    script_dir = os.path.dirname(os.path.abspath(__file__))  # Get the directory of the script
+    exclusion_list_config_file_path = os.path.join(script_dir, ".exclusionListConfig")  # Look for .exclusionListConfig in the script directory
     if os.path.exists(exclusion_list_config_file_path):
         exclusion_list_config = retrieve_exclusion_patterns(exclusion_list_config_file_path)
     else:

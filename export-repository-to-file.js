@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const {program} = require('commander');
 const glob = require('glob');
-const {tqdm} = require('tqdm');
+const cliProgress = require('cli-progress');
 
 function retrieveExclusionPatterns(exclusionFilePath) {
     if (fs.existsSync(exclusionFilePath)) {
@@ -16,7 +16,8 @@ function retrieveExclusionPatterns(exclusionFilePath) {
 
 function isExcluded(filePath, exclusionPatterns) {
     return exclusionPatterns.some(pattern => {
-        return filePath.startsWith(pattern) || glob.sync(pattern, {matchBase: true, dot: true}).includes(filePath);
+        const cleanedPattern = pattern.replace(/\r/g, ''); // Remove carriage return characters
+        return filePath.includes(cleanedPattern);
     });
 }
 
@@ -30,16 +31,19 @@ function isSpecialFile(filePath) {
 
 function processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput) {
     const allFiles = glob.sync('**/*', {cwd: projectPath, nodir: true, dot: true});
-    const progressBar = new tqdm(allFiles.length, {unit: 'file', desc: 'Processing files'});
+    const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
-    allFiles.forEach(file => {
+    progressBar.start(allFiles.length, 0);
+
+    allFiles.forEach((file, index) => {
         const filePath = path.join(projectPath, file);
         const relativeFilePath = path.relative(projectPath, filePath);
 
+        const allExclusionPatterns = [...exclusionPatterns, ...additionalExclusionPatterns, ...exclusionListConfig];
+
         if (
-            !isExcluded(relativeFilePath, exclusionPatterns) &&
-            !isExcluded(relativeFilePath, additionalExclusionPatterns) &&
-            !isExcluded(relativeFilePath, exclusionListConfig) &&
+            !isExcluded(relativeFilePath, allExclusionPatterns) &&
+            !isExcluded(relativeFilePath, ['.git']) &&
             !isSpecialFile(filePath)
         ) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
@@ -54,7 +58,7 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
             }
         }
 
-        progressBar.update(1);
+        progressBar.update(index + 1);
     });
 
     progressBar.stop();
@@ -82,7 +86,8 @@ function main() {
         ? retrieveExclusionPatterns(additionalExclusionPatternsFilePath)
         : [];
 
-    const exclusionListConfigPath = path.join(projectPath, '.exclusionListConfig');
+    const scriptDir = __dirname;
+    const exclusionListConfigPath = path.join(scriptDir, '.exclusionListConfig');
     const exclusionListConfig = retrieveExclusionPatterns(exclusionListConfigPath);
 
     const outputFileDir = path.dirname(outputFilePath);

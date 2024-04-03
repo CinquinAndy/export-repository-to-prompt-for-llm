@@ -77,11 +77,6 @@ def process_project(project_path, exclusion_patterns, additional_exclusion_patte
 
             progress_bar.update(1)
 
-        print(f"Processed {root}")
-        print(f"Files processed: {progress_bar.n}/{total_files}")
-        print(f"Files with more than 250 lines of code or 2500 characters: {large_files_output.tell() / 1024:.2f} KB")
-        print(f"Output file size: {output_file.tell() / 1024:.2f} KB")
-
     progress_bar.close()
 
 

@@ -7,8 +7,12 @@ const glob = require('glob');
 const cliProgress = require('cli-progress');
 
 function retrieveExclusionPatterns(exclusionFilePath) {
+    console.log("exclusionFilePath", exclusionFilePath)
+    console.log(fs.existsSync(exclusionFilePath))
     if (fs.existsSync(exclusionFilePath)) {
         const exclusionContent = fs.readFileSync(exclusionFilePath, 'utf8');
+        console.log("exclusionContent", exclusionContent)
+        console.log("exclusionContent.split('\n')", exclusionContent.split('\n'))
         return exclusionContent.split('\n').filter(pattern => pattern.trim() !== '' && !pattern.startsWith('#'));
     }
     return [];
@@ -39,10 +43,15 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
         const filePath = path.join(projectPath, file);
         const relativeFilePath = path.relative(projectPath, filePath);
 
+        // console.log("exclusionPatterns", exclusionPatterns)
+        // console.log("additionalExclusionPatterns", additionalExclusionPatterns)
+        // console.log("exclusionListConfig", exclusionListConfig)
         const allExclusionPatterns = [...exclusionPatterns, ...additionalExclusionPatterns, ...exclusionListConfig];
+        // console.log(allExclusionPatterns)
 
         if (
             !isExcluded(relativeFilePath, allExclusionPatterns) &&
+            !isExcluded(relativeFilePath, ['.git']) &&
             !isSpecialFile(filePath)
         ) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
@@ -67,8 +76,8 @@ function main() {
     program
         .argument('<projectPath>', 'The path to the project directory')
         .option('-p, --preamble <preambleFile>', 'The path to the preamble file')
-        .option('-o, --output <outputFile>', 'The path to the output file', 'outputz.txt')
-        .option('-l, --largeFiles <largeFilesOutput>', 'The path to the large files output', 'large_files_output.txt')
+        .option('-o, --output <outputFile>', 'The path to the output file', 'output2.txt')
+        .option('-l, --largeFiles <largeFilesOutput>', 'The path to the large files output', 'large_files_output2.txt')
         .option('-e, --exclusionPatterns <exclusionPatternsFile>', 'The path to the additional exclusion patterns file')
         .parse(process.argv);
 
@@ -79,14 +88,16 @@ function main() {
     const additionalExclusionPatternsFilePath = program.opts().exclusionPatterns;
 
     const exclusionFilePath = path.join(projectPath, '.gitignore');
-    const exclusionPatterns = retrieveExclusionPatterns(exclusionFilePath);
+    const exclusionPatterns = [];
 
     const additionalExclusionPatterns = additionalExclusionPatternsFilePath
         ? retrieveExclusionPatterns(additionalExclusionPatternsFilePath)
         : [];
 
     const exclusionListConfigPath = path.join(projectPath, '.exclusionListConfig');
+    console.log("exclusionListConfigPath", exclusionListConfigPath)
     const exclusionListConfig = retrieveExclusionPatterns(exclusionListConfigPath);
+    console.log("exclusionListConfig", exclusionListConfig)
 
     const outputFileDir = path.dirname(outputFilePath);
     if (!fs.existsSync(outputFileDir)) {

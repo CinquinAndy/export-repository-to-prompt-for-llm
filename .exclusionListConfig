@@ -5,3 +5,7 @@ dist
 bun.lockb
 .next
 package-lock.json
+dev-assets
+public/assets
+assets
+public\assets\

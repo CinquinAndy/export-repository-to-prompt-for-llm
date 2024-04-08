@@ -73,6 +73,7 @@ function main() {
         .option('-e, --exclusionPatterns <exclusionPatternsFile>', 'The path to the additional exclusion patterns file')
         .parse(process.argv);
 
+
     const projectPath = program.args[0];
     const preambleFile = program.opts().preamble;
     const outputFilePath = program.opts().output;

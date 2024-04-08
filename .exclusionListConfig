@@ -9,3 +9,4 @@ dev-assets
 public/assets
 assets
 public\assets\
+src\components\Global\Animations\BackgroundBeam.js

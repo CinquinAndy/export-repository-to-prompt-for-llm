@@ -66,7 +66,7 @@ def process_project(project_path, exclusion_patterns, additional_exclusion_patte
                 with open(file_path, 'r', errors='ignore') as file_opened:
                     contents = file_opened.read()
                     # Ignore lines between <svg> and </svg> tags
-                    contents = re.sub(r'<svg>.*?</svg>', '', contents, flags=re.DOTALL)
+                    contents = re.sub(r'<svg(.*?)</svg>', '', contents, flags=re.DOTALL)
                     output_file.write("-" * 4 + "\n")
                     output_file.write(f"{relative_file_path}\n")
                     output_file.write(f"{contents}\n")

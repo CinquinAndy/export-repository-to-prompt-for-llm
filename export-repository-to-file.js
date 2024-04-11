@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const {program} = require('commander');
 const glob = require('glob');
+const minimatch = require('minimatch');
 const cliProgress = require('cli-progress');
 
 function retrieveExclusionPatterns(exclusionFilePath) {
@@ -16,8 +17,7 @@ function retrieveExclusionPatterns(exclusionFilePath) {
 
 function isExcluded(filePath, exclusionPatterns) {
     return exclusionPatterns.some(pattern => {
-        const cleanedPattern = pattern.replace(/\r/g, ''); // Remove carriage return characters
-        return filePath.includes(cleanedPattern);
+        return minimatch(filePath, pattern) || filePath.startsWith(pattern);
     });
 }
 
@@ -43,11 +43,10 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
 
         if (
             !isExcluded(relativeFilePath, allExclusionPatterns) &&
-            !isExcluded(relativeFilePath, ['.git']) &&
             !isSpecialFile(filePath)
         ) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
-            const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
+            const cleanedContent = fileContent.replace(/<svg.*?<\/svg>/gs, '');
 
             outputFile.write("-".repeat(4) + "\n");
             outputFile.write(relativeFilePath + "\n");
@@ -73,7 +72,6 @@ function main() {
         .option('-e, --exclusionPatterns <exclusionPatternsFile>', 'The path to the additional exclusion patterns file')
         .parse(process.argv);
 
-
     const projectPath = program.args[0];
     const preambleFile = program.opts().preamble;
     const outputFilePath = program.opts().output;
@@ -81,7 +79,16 @@ function main() {
     const additionalExclusionPatternsFilePath = program.opts().exclusionPatterns;
 
     const exclusionFilePath = path.join(projectPath, '.gitignore');
-    const exclusionPatterns = retrieveExclusionPatterns(exclusionFilePath);
+    let exclusionPatterns = [];
+
+    if (fs.existsSync(exclusionFilePath)) {
+        exclusionPatterns = retrieveExclusionPatterns(exclusionFilePath);
+    } else {
+        const fallbackExclusionFilePath = path.join(__dirname, '.gitignore');
+        if (fs.existsSync(fallbackExclusionFilePath)) {
+            exclusionPatterns = retrieveExclusionPatterns(fallbackExclusionFilePath);
+        }
+    }
 
     const additionalExclusionPatterns = additionalExclusionPatternsFilePath
         ? retrieveExclusionPatterns(additionalExclusionPatternsFilePath)
@@ -91,25 +98,22 @@ function main() {
     const exclusionListConfigPath = path.join(scriptDir, '.exclusionListConfig');
     const exclusionListConfig = retrieveExclusionPatterns(exclusionListConfigPath);
 
-    const outputFileDir = path.dirname(outputFilePath);
-    if (!fs.existsSync(outputFileDir)) {
-        fs.mkdirSync(outputFileDir, {recursive: true});
-    }
-
-    const largeFilesOutputDir = path.dirname(largeFilesOutputPath);
-    if (!fs.existsSync(largeFilesOutputDir)) {
-        fs.mkdirSync(largeFilesOutputDir, {recursive: true});
-    }
-
     const outputFile = fs.createWriteStream(outputFilePath);
     const largeFilesOutput = fs.createWriteStream(largeFilesOutputPath);
 
-    if (preambleFile) {
+    if (preambleFile && fs.existsSync(preambleFile)) {
         const preambleContent = fs.readFileSync(preambleFile, 'utf8');
         outputFile.write(preambleContent + "\n");
     } else {
         outputFile.write("The following text represents a project with code. The structure of the text consists of sections beginning with ----, followed by a single line containing the file path and file name, and then a variable number of lines containing the file contents. The text representing the project ends when the symbols --END-- are encountered. Any further text beyond --END-- is meant to be interpreted as instructions using the aforementioned project as context.\n");
     }
+
+    console.log(`Processing project: ${projectPath}`);
+    console.log(`Using exclusion file: ${exclusionFilePath}`);
+    console.log(`Using additional exclusion patterns file: ${additionalExclusionPatternsFilePath}`);
+    console.log(`Using exclusion list config file: ${exclusionListConfigPath}`);
+    console.log(`Output file: ${outputFilePath}`);
+    console.log(`Large files output: ${largeFilesOutputPath}`);
 
     processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput);
 

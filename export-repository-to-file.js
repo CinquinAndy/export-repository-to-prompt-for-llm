@@ -30,42 +30,45 @@ function isSpecialFile(filePath) {
 }
 
 function processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput) {
-    const allFiles = glob.sync('**/*', {cwd: projectPath, nodir: true, dot: true});
-    const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
+    return new Promise((resolve) => {
+        const allFiles = glob.sync('**/*', {cwd: projectPath, nodir: true, dot: true});
+        const progressBar = new cliProgress.SingleBar({}, cliProgress.Presets.shades_classic);
 
-    progressBar.start(allFiles.length, 0);
+        progressBar.start(allFiles.length, 0);
 
-    allFiles.forEach((file, index) => {
-        const filePath = path.join(projectPath, file);
-        const relativeFilePath = path.relative(projectPath, filePath);
+        allFiles.forEach((file, index) => {
+            const filePath = path.join(projectPath, file);
+            const relativeFilePath = path.relative(projectPath, filePath);
 
-        const allExclusionPatterns = [...exclusionPatterns, ...additionalExclusionPatterns, ...exclusionListConfig];
+            const allExclusionPatterns = [...exclusionPatterns, ...additionalExclusionPatterns, ...exclusionListConfig];
 
-        if (
-            !isExcluded(relativeFilePath, allExclusionPatterns) &&
-            !isExcluded(relativeFilePath, ['.git']) &&
-            !isSpecialFile(filePath)
-        ) {
-            const fileContent = fs.readFileSync(filePath, 'utf8');
-            const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
+            if (
+                !isExcluded(relativeFilePath, allExclusionPatterns) &&
+                !isExcluded(relativeFilePath, ['.git']) &&
+                !isSpecialFile(filePath)
+            ) {
+                const fileContent = fs.readFileSync(filePath, 'utf8');
+                const cleanedContent = fileContent.replace(/<svg>.*?<\/svg>/gs, '');
 
-            outputFile.write("-".repeat(4) + "\n");
-            outputFile.write(relativeFilePath + "\n");
-            outputFile.write(cleanedContent + "\n");
+                outputFile.write("-".repeat(4) + "\n");
+                outputFile.write(relativeFilePath + "\n");
+                outputFile.write(cleanedContent + "\n");
 
-            if (cleanedContent.split('\n').length > 250 || cleanedContent.length > 2500) {
-                largeFilesOutput.write(relativeFilePath + "\n");
+                if (cleanedContent.split('\n').length > 250 || cleanedContent.length > 2500) {
+                    largeFilesOutput.write(relativeFilePath + "\n");
+                }
             }
-        }
 
-        progressBar.update(index + 1);
+            progressBar.update(index + 1);
+        });
+
+        progressBar.stop();
+        resolve();
     });
-
-    progressBar.stop();
 }
 
-function main() {
-    console.log('Exporting project to file...')
+async function main() {
+    console.log('Exporting project to file...');
 
     program
         .argument('<projectPath>', 'The path to the project directory')
@@ -74,7 +77,6 @@ function main() {
         .option('-l, --largeFiles <largeFilesOutput>', 'The path to the large files output', 'large_files_output.txt')
         .option('-e, --exclusionPatterns <exclusionPatternsFile>', 'The path to the additional exclusion patterns file')
         .parse(process.argv);
-
 
     const projectPath = program.args[0];
     const preambleFile = program.opts().preamble;
@@ -113,14 +115,18 @@ function main() {
         outputFile.write("The following text represents a project with code. The structure of the text consists of sections beginning with ----, followed by a single line containing the file path and file name, and then a variable number of lines containing the file contents. The text representing the project ends when the symbols --END-- are encountered. Any further text beyond --END-- is meant to be interpreted as instructions using the aforementioned project as context.\n");
     }
 
-    processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput);
+    try {
+        await processProject(projectPath, exclusionPatterns, additionalExclusionPatterns, exclusionListConfig, outputFile, largeFilesOutput);
 
-    outputFile.write("--END--");
-    outputFile.end();
-    largeFilesOutput.end();
+        outputFile.write("--END--");
+        outputFile.end();
+        largeFilesOutput.end();
 
-    console.log(`Project contents written to ${outputFilePath}.`);
-    console.log(`Files with more than 250 lines of code or 2500 characters listed in ${largeFilesOutputPath}.`);
+        console.log(`Project contents written to ${outputFilePath}.`);
+        console.log(`Files with more than 250 lines of code or 2500 characters listed in ${largeFilesOutputPath}.`);
+    } catch (error) {
+        console.error('An error occurred while processing the project:', error);
+    }
 }
 
 if (require.main === module) {

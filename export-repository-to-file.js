@@ -64,6 +64,7 @@ function processProject(projectPath, exclusionPatterns, additionalExclusionPatte
 }
 
 function main() {
+    console.log('Exporting project to file... (local)')
     program
         .argument('<projectPath>', 'The path to the project directory')
         .option('-p, --preamble <preambleFile>', 'The path to the preamble file')

@@ -10,3 +10,7 @@ public/assets
 assets
 public\assets\
 src\components\Global\Animations\BackgroundBeam.js
+.idea
+env
+output.txt
+large_files_output.txt

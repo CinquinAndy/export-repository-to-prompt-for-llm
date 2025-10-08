@@ -16,7 +16,7 @@
     "minimatch": "^9.0.4",
     "prettier": "^3.2.5",
     "python-shell": "5.0.0",
-    "semver": "7.7.2"
+    "semver": "7.7.3"
   },
   "author": "Cinquin Andy",
   "license": "MIT"
